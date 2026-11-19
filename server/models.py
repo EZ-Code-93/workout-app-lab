@@ -21,6 +21,18 @@ class WorkoutExercises(db.Model):
 
 
 
+class WorkoutExercisesSchema(Schema):
+    id = fields.Int()
+    workout_id = fields.Int()
+    exercise_id = fields.Int()
+    reps = fields.Int()
+    sets = fields.Int()
+    duration_seconds = fields.Int()
+    workout = fields.Nested(lambda: WorkoutSchema(exclude=('workout_exercises',)))
+    exercise = fields.Nested(lambda: ExerciseSchema(exclude=('workout_exercises',)))
+
+
+
 class Exercise(db.Model):
     __tablename__ = 'exercises'
 
