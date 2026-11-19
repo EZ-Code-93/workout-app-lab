@@ -1,7 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import validates
 from sqlalchemy.ext.associationproxy import association_proxy
-from marshmallow import Schema, fields
+from marshmallow import Schema, fields, validate, validates_schema, ValidationError
 
 db = SQLAlchemy()
 
@@ -25,7 +25,17 @@ class WorkoutExercise(db.Model):
         db.CheckConstraint('duration_seconds > 0', name='check_duration_seconds_positive')
     )
 
+    @validates('sets')
+    def validate_sets(self, key, value):
+        if value is not None and (not isinstance(value, int) or value <= 0):
+            raise ValueError("Sets must be a positive integer greater than 0.")
+        return value
 
+    @validates('reps', 'duration_seconds')
+    def validate_non_negative_metrics(self, key, value):
+        if value is not None and (not isinstance(value, int) or value < 0):
+            raise ValueError(f"{key} must be a non-negative integer (0 or greater).")
+        return value
 
 class WorkoutExerciseSchema(Schema):
     id = fields.Int()
@@ -38,6 +48,8 @@ class WorkoutExerciseSchema(Schema):
     exercise = fields.Nested(lambda: ExerciseSchema(exclude=('workout_exercises', 'workouts')))
 
 
+
+VALID_CATEGORIES = ['strength', 'cardio', 'flexibility', 'balance', 'hiit']
 
 class Exercise(db.Model):
     __tablename__ = 'exercises'
@@ -55,7 +67,26 @@ class Exercise(db.Model):
         db.CheckConstraint('category != ""', name='check_category_not_empty')
     )
 
+    @validates('name')
+    def validate_name(self, key, value):
+        if not value or not isinstance(value, str) or not value.strip():
+            raise ValueError("Exercise name must be a non-empty string.")
+        return value.strip()
 
+    @validates('category')
+    def validate_category(self, key, value):
+        if not value or not isinstance(value, str) or not value.strip():
+            raise ValueError("Category must be a non-empty string.")
+        normalized = value.strip().lower()
+        if normalized not in VALID_CATEGORIES:
+            raise ValueError(f"Category must be one of: {', '.join(VALID_CATEGORIES)}.")
+        return normalized
+
+    @validates('equipment_needed')
+    def validate_equipment_needed(self, key, value):
+        if not isinstance(value, bool):
+            raise ValueError("equipment_needed must be a boolean (True or False).")
+        return value
 
 class ExerciseSchema(Schema):
     id = fields.Int()
@@ -82,7 +113,24 @@ class Workout(db.Model):
         db.CheckConstraint('duration_minutes > 0', name='check_duration_positive')
     )
 
+    @validates('duration_minutes')
+    def validate_duration_minutes(self, key, value):
+        if value is None or not isinstance(value, int) or value <= 0:
+            raise ValueError("Duration minutes must be a positive integer greater than 0.")
+        return value
 
+    @validates('date')
+    def validate_date(self, key, value):
+        if value is None:
+            raise ValueError("Workout date is required.")
+        if isinstance(value, str):
+            try:
+                value = date.fromisoformat(value)
+            except ValueError:
+                raise ValueError("Date must be in YYYY-MM-DD format.")
+        if not isinstance(value, date):
+            raise ValueError("Invalid date object.")
+        return value
 
 class WorkoutSchema(Schema):
     id = fields.Int()
