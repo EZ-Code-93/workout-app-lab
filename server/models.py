@@ -1,5 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import validates
+from sqlalchemy.ext.associationproxy import association_proxy
 from marshmallow import Schema, fields
 
 db = SQLAlchemy()
@@ -29,7 +30,7 @@ class Exercise(db.Model):
     equipment_needed = db.Column(db.Boolean, nullable=False)
 
     workout_exercises = db.relationship('WorkoutExercises', back_populates='exercise', cascade='all, delete-orphan')
-
+    workouts = association_proxy('workout_exercises', 'workout')
 
 
 class ExerciseSchema(Schema):
@@ -38,7 +39,7 @@ class ExerciseSchema(Schema):
     category = fields.Str()
     equipment_needed = fields.Bool()
     workout_exercises = fields.List(fields.Nested(lambda: WorkoutExercisesSchema(exclude=('exercise',))))
-
+    workouts = fields.List(fields.Nested(lambda: WorkoutSchema(exclude=('exercises',))))
 
 
 class Workout(db.Model):
@@ -50,7 +51,7 @@ class Workout(db.Model):
     notes = db.Column(db.Text, nullable=False)
 
     workout_exercises = db.relationship('WorkoutExercises', back_populates='workout', cascade='all, delete-orphan')
-
+    exercises = association_proxy('workout_exercises', 'exercise')
 
 
 
