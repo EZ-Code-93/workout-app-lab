@@ -1,8 +1,25 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import validates
+from marshmallow import Schema, fields
+
 db = SQLAlchemy()
 
 # Define Models here
+class WorkoutExercises(db.Model):
+    __tablename__ = 'workout_exercises'
+
+    id = db.Column(db.Integer, primary_key=True)
+    workout_id = db.Column(db.Integer, db.ForeignKey('workouts.id'), nullable=False)
+    exercise_id = db.Column(db.Integer, db.ForeignKey('exercises.id'), nullable=False)
+    reps = db.Column(db.Integer, nullable=False)
+    sets = db.Column(db.Integer, nullable=False)
+    duration_seconds = db.Column(db.Integer, nullable=False)
+
+    workout = db.relationship('Workout', back_populates='workout_exercises')
+    exercise = db.relationship('Exercise', back_populates='workout_exercises')
+
+
+
 class Exercise(db.Model):
     __tablename__ = 'exercises'
 
@@ -12,6 +29,15 @@ class Exercise(db.Model):
     equipment_needed = db.Column(db.Boolean, nullable=False)
 
     workout_exercises = db.relationship('WorkoutExercises', back_populates='exercise', cascade='all, delete-orphan')
+
+
+
+class ExerciseSchema(Schema):
+    id = fields.Int()
+    name = fields.Str()
+    category = fields.Str()
+    equipment_needed = fields.Bool()
+    workout_exercises = fields.List(fields.Nested(lambda: WorkoutExercisesSchema(exclude=('exercise',))))
 
 
 
@@ -27,17 +53,6 @@ class Workout(db.Model):
 
 
 
-class WorkoutExercises(db.Model):
-    __tablename__ = 'workout_exercises'
 
-    id = db.Column(db.Integer, primary_key=True)
-    workout_id = db.Column(db.Integer, db.ForeignKey('workouts.id'), nullable=False)
-    exercise_id = db.Column(db.Integer, db.ForeignKey('exercises.id'), nullable=False)
-    reps = db.Column(db.Integer, nullable=False)
-    sets = db.Column(db.Integer, nullable=False)
-    duration_seconds = db.Column(db.Integer, nullable=False)
-
-    workout = db.relationship('Workout', back_populates='workout_exercises')
-    exercise = db.relationship('Exercise', back_populates='workout_exercises')
 
 
