@@ -33,6 +33,7 @@ class Exercise(db.Model):
     workouts = association_proxy('workout_exercises', 'workout')
 
 
+
 class ExerciseSchema(Schema):
     id = fields.Int()
     name = fields.Str()
@@ -40,6 +41,7 @@ class ExerciseSchema(Schema):
     equipment_needed = fields.Bool()
     workout_exercises = fields.List(fields.Nested(lambda: WorkoutExercisesSchema(exclude=('exercise',))))
     workouts = fields.List(fields.Nested(lambda: WorkoutSchema(exclude=('exercises',))))
+
 
 
 class Workout(db.Model):
@@ -55,5 +57,11 @@ class Workout(db.Model):
 
 
 
-
+class WorkoutSchema(Schema):
+    id = fields.Int()
+    date = fields.Date()
+    duration_minutes = fields.Int()
+    notes = fields.Text()
+    workout_exercises = fields.List(fields.Nested(lambda: WorkoutExercisesSchema(exclude=('workout',))))
+    exercises = fields.List(fields.Nested(lambda: ExerciseSchema(exclude=('workouts',))))
 
