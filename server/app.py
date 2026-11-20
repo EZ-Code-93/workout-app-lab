@@ -55,6 +55,18 @@ def create_workout():
         return make_response({'errors': [str(err)]}, 400)
 
 
+@app.route('/workouts/<int:id>', methods=['DELETE'])
+def delete_workout(id):
+    workout = db.session.get(Workout, id)
+    if not workout:
+        return make_response({'error': 'Workout not found'}, 404)
+
+    # cascade='all, delete-orphan' on Workout automatically deletes associated WorkoutExercises
+    db.session.delete(workout)
+    db.session.commit()
+    return make_response({}, 204)
+
+
 @app.route('/exercises', methods=['GET'])
 def get_exercises():
     exercises = Exercise.query.all()
@@ -84,6 +96,18 @@ def create_exercise():
     except (ValueError, IntegrityError) as err:
         db.session.rollback()
         return make_response({'errors': [str(err)]}, 400)
+
+
+@app.route('/exercises/<int:id>', methods=['DELETE'])
+def delete_exercise(id):
+    exercise = db.session.get(Exercise, id)
+    if not exercise:
+        return make_response({'error': 'Exercise not found'}, 404)
+
+    # cascade='all, delete-orphan' on Exercise automatically deletes associated WorkoutExercises
+    db.session.delete(exercise)
+    db.session.commit()
+    return make_response({}, 204)
 
 
 @app.route('/workouts/<int:workout_id>/exercises/<int:exercise_id>/workout_exercises', methods=['POST'])
