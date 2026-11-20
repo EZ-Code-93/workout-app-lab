@@ -4,7 +4,7 @@ from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 
 from models import *
-
+# Initialize Flask app and database connection
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -23,12 +23,18 @@ exercises_schema = ExerciseSchema(many=True, exclude=('workout_exercises', 'work
 workout_exercise_schema = WorkoutExerciseSchema()
 
 # Define Routes here
+
+#    ----- Workout Routes -----
+
+
+# Get all workouts
 @app.route('/workouts', methods=['GET'])
 def get_workouts():
     workouts = Workout.query.all()
     return make_response(workouts_schema.dump(workouts), 200)
 
 
+# Get workout by ID
 @app.route('/workouts/<int:id>', methods=['GET'])
 def get_workout_by_id(id):
     workout = db.session.get(Workout, id)
@@ -39,6 +45,7 @@ def get_workout_by_id(id):
     return make_response(workout_schema.dump(workout), 200)
 
 
+# Create a new workout
 @app.route('/workouts', methods=['POST'])
 def create_workout():
     data = request.get_json(silent=True) or {}
@@ -55,6 +62,7 @@ def create_workout():
         return make_response({'errors': [str(err)]}, 400)
 
 
+# Delete a workout by ID
 @app.route('/workouts/<int:id>', methods=['DELETE'])
 def delete_workout(id):
     workout = db.session.get(Workout, id)
@@ -67,12 +75,17 @@ def delete_workout(id):
     return make_response({}, 204)
 
 
+#    ----- Exercise Routes -----
+
+
+# Get all exercises
 @app.route('/exercises', methods=['GET'])
 def get_exercises():
     exercises = Exercise.query.all()
     return make_response(exercises_schema.dump(exercises), 200)
 
 
+# Get exercise by ID
 @app.route('/exercises/<int:id>', methods=['GET'])
 def get_exercise_by_id(id):
     exercise = db.session.get(Exercise, id)
@@ -82,6 +95,7 @@ def get_exercise_by_id(id):
     return make_response(exercise_schema.dump(exercise), 200)
 
 
+# Create a new exercise
 @app.route('/exercises', methods=['POST'])
 def create_exercise():
     data = request.get_json(silent=True) or {}
@@ -98,6 +112,7 @@ def create_exercise():
         return make_response({'errors': [str(err)]}, 400)
 
 
+# Delete an exercise by ID
 @app.route('/exercises/<int:id>', methods=['DELETE'])
 def delete_exercise(id):
     exercise = db.session.get(Exercise, id)
@@ -110,6 +125,10 @@ def delete_exercise(id):
     return make_response({}, 204)
 
 
+#    ----- WorkoutExercise Routes -----
+
+
+# Add an exercise to a workout
 @app.route('/workouts/<int:workout_id>/exercises/<int:exercise_id>/workout_exercises', methods=['POST'])
 def add_exercise_to_workout(workout_id, exercise_id):
     workout = db.session.get(Workout, workout_id)
