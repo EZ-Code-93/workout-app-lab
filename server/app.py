@@ -1,3 +1,4 @@
+import os
 from flask import Flask, request, make_response
 from flask_migrate import Migrate
 from marshmallow import ValidationError
@@ -6,7 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from models import *
 # Initialize Flask app and database connection
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URI', 'sqlite:///app.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 migrate = Migrate(app, db)

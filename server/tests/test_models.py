@@ -1,3 +1,5 @@
+import os
+os.environ['DATABASE_URI'] = 'sqlite:///:memory:'
 from datetime import date
 import pytest
 from marshmallow import ValidationError
