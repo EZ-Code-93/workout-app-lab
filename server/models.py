@@ -23,7 +23,7 @@ class WorkoutExercise(db.Model):
     __table_args__ = (
         db.CheckConstraint('reps > 0', name='check_reps_positive'),
         db.CheckConstraint('sets > 0', name='check_sets_positive'),
-        db.CheckConstraint('duration_seconds > 0', name='check_duration_seconds_positive')
+        db.CheckConstraint('duration_seconds > 0', name='check_duration_seconds_positive'),
     )
 
     @validates('sets')
@@ -68,7 +68,7 @@ class Exercise(db.Model):
 
     __table_args__ = (
         db.CheckConstraint('name != ""', name='check_name_not_empty'),
-        db.CheckConstraint('category != ""', name='check_category_not_empty')
+        db.CheckConstraint('category != ""', name='check_category_not_empty'),
     )
 
     @validates('name')
@@ -118,7 +118,7 @@ class Workout(db.Model):
     exercises = association_proxy('workout_exercises', 'exercise')
 
     __table_args__ = (
-        db.CheckConstraint('duration_minutes > 0', name='check_duration_positive')
+        db.CheckConstraint('duration_minutes > 0', name='check_duration_positive'),
     )
 
     @validates('duration_minutes')
@@ -145,7 +145,7 @@ class WorkoutSchema(Schema):
     date = fields.Date(required=True)
     duration_minutes = fields.Int(
         required=True, validate=validate.Range(min=1, error="Duration must be at least 1 minute"))
-    notes = fields.Text(allow_none=True)
+    notes = fields.Str(allow_none=True)
     workout_exercises = fields.List(
         fields.Nested(lambda: WorkoutExerciseSchema(exclude=('workout',))), dump_only=True)
     exercises = fields.List(
