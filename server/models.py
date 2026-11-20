@@ -2,7 +2,7 @@ from datetime import date
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import validates
 from sqlalchemy.ext.associationproxy import association_proxy
-from marshmallow import Schema, fields, validate, validates_schema, ValidationError
+from marshmallow import Schema, fields, validate
 
 db = SQLAlchemy()
 
