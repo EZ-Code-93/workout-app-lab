@@ -7,6 +7,12 @@ from marshmallow import Schema, fields, validate
 db = SQLAlchemy()
 
 # Define Models here
+
+#    ----- WorkoutExercise Model and Schema -----
+
+
+# WorkoutExercise represents the association between a workout and an exercise, 
+# including sets, reps, and duration.
 class WorkoutExercise(db.Model):
     __tablename__ = 'workout_exercises'
 
@@ -20,12 +26,14 @@ class WorkoutExercise(db.Model):
     workout = db.relationship('Workout', back_populates='workout_exercises')
     exercise = db.relationship('Exercise', back_populates='workout_exercises')
 
+    # Table-level constraints and validations ensure that sets, reps, and duration are positive integers.
     __table_args__ = (
         db.CheckConstraint('reps > 0', name='check_reps_positive'),
         db.CheckConstraint('sets > 0', name='check_sets_positive'),
         db.CheckConstraint('duration_seconds > 0', name='check_duration_seconds_positive'),
     )
 
+    # Validations for WorkoutExercise fields
     @validates('sets')
     def validate_sets(self, key, value):
         if value is not None and (not isinstance(value, int) or value <= 0):
@@ -38,6 +46,8 @@ class WorkoutExercise(db.Model):
             raise ValueError(f"{key} must be a positive integer greater than 0 or None.")
         return value
 
+# WorkoutExercise Schema for serialization and deserialization of WorkoutExercise instances
+# Includes schema validation for positive integers and nested workout and exercise data.
 class WorkoutExerciseSchema(Schema):
     id = fields.Int(dump_only=True)
     workout_id = fields.Int(required=True)
@@ -52,9 +62,12 @@ class WorkoutExerciseSchema(Schema):
     exercise = fields.Nested(lambda: ExerciseSchema(exclude=('workout_exercises', 'workouts')), dump_only=True)
 
 
+#    ----- Exercise Model and Schema -----
 
+
+# Valid categories for exercises
 VALID_CATEGORIES = ['strength', 'cardio', 'flexibility', 'balance', 'hiit']
-
+# Exercise model represents a type of exercise with a name, category, and equipment requirement.
 class Exercise(db.Model):
     __tablename__ = 'exercises'
 
@@ -66,11 +79,13 @@ class Exercise(db.Model):
     workout_exercises = db.relationship('WorkoutExercise', back_populates='exercise', cascade='all, delete-orphan')
     workouts = association_proxy('workout_exercises', 'workout')
 
+    # Table-level constraints
     __table_args__ = (
         db.CheckConstraint('name != ""', name='check_name_not_empty'),
         db.CheckConstraint('category != ""', name='check_category_not_empty'),
     )
 
+    # Validations for Exercise fields
     @validates('name')
     def validate_name(self, key, value):
         if not value or not isinstance(value, str) or not value.strip():
@@ -92,6 +107,8 @@ class Exercise(db.Model):
             raise ValueError("equipment_needed must be a boolean (True or False).")
         return value
 
+# Exercise Schema for serialization and deserialization of Exercise instances
+# Includes nested workout_exercises and workouts for relational data.
 class ExerciseSchema(Schema):
     id = fields.Int(dump_only=True)
     name = fields.Str(
@@ -105,7 +122,10 @@ class ExerciseSchema(Schema):
         fields.Nested(lambda: WorkoutSchema(exclude=('exercises', 'workout_exercises'))), dump_only=True)
 
 
+#    ----- Workout Model and Schema -----
 
+
+# Workout model represents a single workout session with date, duration, and optional notes.
 class Workout(db.Model):
     __tablename__ = 'workouts'
 
@@ -117,10 +137,12 @@ class Workout(db.Model):
     workout_exercises = db.relationship('WorkoutExercise', back_populates='workout', cascade='all, delete-orphan')
     exercises = association_proxy('workout_exercises', 'exercise')
 
+    # Table-level constraints
     __table_args__ = (
         db.CheckConstraint('duration_minutes > 0', name='check_duration_positive'),
     )
 
+    # Validations for Workout fields
     @validates('duration_minutes')
     def validate_duration_minutes(self, key, value):
         if value is None or not isinstance(value, int) or value <= 0:
@@ -140,6 +162,8 @@ class Workout(db.Model):
             raise ValueError("Invalid date object.")
         return value
 
+# Workout Schema for serialization and deserialization of Workout instances
+# Includes schema validation and nested workout_exercises and exercises for relational data.
 class WorkoutSchema(Schema):
     id = fields.Int(dump_only=True)
     date = fields.Date(required=True)
