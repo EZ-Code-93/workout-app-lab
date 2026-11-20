@@ -1,3 +1,4 @@
+from datetime import date
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import validates
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -38,14 +39,17 @@ class WorkoutExercise(db.Model):
         return value
 
 class WorkoutExerciseSchema(Schema):
-    id = fields.Int()
-    workout_id = fields.Int()
-    exercise_id = fields.Int()
-    reps = fields.Int()
-    sets = fields.Int()
-    duration_seconds = fields.Int()
-    workout = fields.Nested(lambda: WorkoutSchema(exclude=('workout_exercises', 'exercises')))
-    exercise = fields.Nested(lambda: ExerciseSchema(exclude=('workout_exercises', 'workouts')))
+    id = fields.Int(dump_only=True)
+    workout_id = fields.Int(required=True)
+    exercise_id = fields.Int(required=True)
+    reps = fields.Int(
+        allow_none=True, validate=validate.Range(min=0, error="Reps cannot be negative."))
+    sets = fields.Int(
+        allow_none=True, validate=validate.Range(min=1, error="Sets must be at least 1."))
+    duration_seconds = fields.Int(
+        allow_none=True, validate=validate.Range(min=0, error="Duration cannot be negative."))
+    workout = fields.Nested(lambda: WorkoutSchema(exclude=('workout_exercises', 'exercises')), dump_only=True)
+    exercise = fields.Nested(lambda: ExerciseSchema(exclude=('workout_exercises', 'workouts')), dump_only=True)
 
 
 
@@ -89,12 +93,16 @@ class Exercise(db.Model):
         return value
 
 class ExerciseSchema(Schema):
-    id = fields.Int()
-    name = fields.Str()
-    category = fields.Str()
-    equipment_needed = fields.Bool()
-    workout_exercises = fields.List(fields.Nested(lambda: WorkoutExerciseSchema(exclude=('exercise',))))
-    workouts = fields.List(fields.Nested(lambda: WorkoutSchema(exclude=('exercises', 'workout_exercises'))))
+    id = fields.Int(dump_only=True)
+    name = fields.Str(
+        required=True, validate=validate.Length(min=1, max=100, error="Name must be between 1 and 100 characters."))
+    category = fields.Str(
+        required=True, validate=validate.OneOf(VALID_CATEGORIES, error=f"Category must be one of: {', '.join(VALID_CATEGORIES)}."))
+    equipment_needed = fields.Bool(required=True)
+    workout_exercises = fields.List(
+        fields.Nested(lambda: WorkoutExerciseSchema(exclude=('exercise',))), dump_only=True)
+    workouts = fields.List(
+        fields.Nested(lambda: WorkoutSchema(exclude=('exercises', 'workout_exercises'))), dump_only=True)
 
 
 
@@ -133,10 +141,13 @@ class Workout(db.Model):
         return value
 
 class WorkoutSchema(Schema):
-    id = fields.Int()
-    date = fields.Date()
-    duration_minutes = fields.Int()
-    notes = fields.Text()
-    workout_exercises = fields.List(fields.Nested(lambda: WorkoutExerciseSchema(exclude=('workout',))))
-    exercises = fields.List(fields.Nested(lambda: ExerciseSchema(exclude=('workouts', 'workout_exercises'))))
+    id = fields.Int(dump_only=True)
+    date = fields.Date(required=True)
+    duration_minutes = fields.Int(
+        required=True, validate=validate.Range(min=1, error="Duration must be at least 1 minute"))
+    notes = fields.Text(allow_none=True)
+    workout_exercises = fields.List(
+        fields.Nested(lambda: WorkoutExerciseSchema(exclude=('workout',))), dump_only=True)
+    exercises = fields.List(
+        fields.Nested(lambda: ExerciseSchema(exclude=('workouts', 'workout_exercises'))), dump_only=True)
 
