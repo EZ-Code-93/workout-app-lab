@@ -39,6 +39,22 @@ def get_workout_by_id(id):
     return make_response(workout_schema.dump(workout), 200)
 
 
+@app.route('/workouts', methods=['POST'])
+def create_workout():
+    data = request.get_json(silent=True) or {}
+    try:
+        validated_data = workout_schema.load(data)
+        new_workout = Workout(**validated_data)
+        db.session.add(new_workout)
+        db.session.commit()
+        return make_response(workout_schema.dump(new_workout), 201)
+    except ValidationError as err:
+        return make_response({'errors': err.messages}, 400)
+    except (ValueError, IntegrityError) as err:
+        db.session.rollback()
+        return make_response({'errors': [str(err)]}, 400)
+
+
 @app.route('/exercises', methods=['GET'])
 def get_exercises():
     exercises = Exercise.query.all()
@@ -52,6 +68,51 @@ def get_exercise_by_id(id):
         return make_response({'error': 'Exercise not found'}, 404)
 
     return make_response(exercise_schema.dump(exercise), 200)
+
+
+@app.route('/exercises', methods=['POST'])
+def create_exercise():
+    data = request.get_json(silent=True) or {}
+    try:
+        validated_data = exercise_schema.load(data)
+        new_exercise = Exercise(**validated_data)
+        db.session.add(new_exercise)
+        db.session.commit()
+        return make_response(exercise_schema.dump(new_exercise), 201)
+    except ValidationError as err:
+        return make_response({'errors': err.messages}, 400)
+    except (ValueError, IntegrityError) as err:
+        db.session.rollback()
+        return make_response({'errors': [str(err)]}, 400)
+
+
+@app.route('/workouts/<int:workout_id>/exercises/<int:exercise_id>/workout_exercises', methods=['POST'])
+def add_exercise_to_workout(workout_id, exercise_id):
+    workout = db.session.get(Workout, workout_id)
+    if not workout:
+        return make_response({'error': 'Workout not found'}, 404)
+
+    exercise = db.session.get(Exercise, exercise_id)
+    if not exercise:
+        return make_response({'error': 'Exercise not found'}, 404)
+
+    data = request.get_json(silent=True) or {}
+    # Inject URL parameters so WorkoutExercisesSchema validates them cleanly
+    data['workout_id'] = workout_id
+    data['exercise_id'] = exercise_id
+
+    try:
+        validated_data = workout_exercise_schema.load(data)
+        new_workout_exercise = WorkoutExercises(**validated_data)
+        db.session.add(new_workout_exercise)
+        db.session.commit()
+        return make_response(workout_exercise_schema.dump(new_workout_exercise), 201)
+    except ValidationError as err:
+        return make_response({'errors': err.messages}, 400)
+    except (ValueError, IntegrityError) as err:
+        db.session.rollback()
+        return make_response({'errors': [str(err)]}, 400)
+
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
