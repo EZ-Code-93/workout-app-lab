@@ -31,6 +31,7 @@ workout-app-lab/
     ├── models.py           # SQLAlchemy models, constraints, validations, and Marshmallow schemas
     ├── seed.py             # Database seeding script with sample workouts and exercises
     ├── migrations/         # Alembic migration versions
+    ├── pytest.ini
     └── tests/
         ├── test_app.py     # Endpoint and HTTP status code unit tests
         └── test_models.py  # Model constraint, validation, and schema unit tests
@@ -42,7 +43,7 @@ workout-app-lab/
 
 ### 1. Fork & Clone the Repository
 ```bash
-git clone https://github.com<your-username>/workout-app-lab.git
+git clone https://github.com/EZ-Code-93/workout-app-lab.git
 cd workout-app-lab
 ```
 
