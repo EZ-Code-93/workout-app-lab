@@ -33,9 +33,9 @@ class WorkoutExercise(db.Model):
         return value
 
     @validates('reps', 'duration_seconds')
-    def validate_non_negative_metrics(self, key, value):
+    def validate_positive_metrics(self, key, value):
         if value is not None and (not isinstance(value, int) or value < 0):
-            raise ValueError(f"{key} must be a non-negative integer (0 or greater).")
+            raise ValueError(f"{key} must be a positive integer greater than 0 or None.")
         return value
 
 class WorkoutExerciseSchema(Schema):
@@ -43,11 +43,11 @@ class WorkoutExerciseSchema(Schema):
     workout_id = fields.Int(required=True)
     exercise_id = fields.Int(required=True)
     reps = fields.Int(
-        allow_none=True, validate=validate.Range(min=0, error="Reps cannot be negative."))
+        allow_none=True, validate=validate.Range(min=1, error="Reps must be at least 1."))
     sets = fields.Int(
         allow_none=True, validate=validate.Range(min=1, error="Sets must be at least 1."))
     duration_seconds = fields.Int(
-        allow_none=True, validate=validate.Range(min=0, error="Duration cannot be negative."))
+        allow_none=True, validate=validate.Range(min=1, error="Duration must be at least 1 second."))
     workout = fields.Nested(lambda: WorkoutSchema(exclude=('workout_exercises', 'exercises')), dump_only=True)
     exercise = fields.Nested(lambda: ExerciseSchema(exclude=('workout_exercises', 'workouts')), dump_only=True)
 
