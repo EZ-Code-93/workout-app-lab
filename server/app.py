@@ -127,7 +127,7 @@ def add_exercise_to_workout(workout_id, exercise_id):
 
     try:
         validated_data = workout_exercise_schema.load(data)
-        new_workout_exercise = WorkoutExercises(**validated_data)
+        new_workout_exercise = WorkoutExercise(**validated_data)
         db.session.add(new_workout_exercise)
         db.session.commit()
         return make_response(workout_exercise_schema.dump(new_workout_exercise), 201)
